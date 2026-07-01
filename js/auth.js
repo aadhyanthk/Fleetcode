@@ -1,5 +1,6 @@
 import { auth, googleProvider } from './firebase-config.js';
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { setupPreloadedDecks } from './firestore.js';
 
 const appContainer = document.getElementById('app');
 
@@ -9,6 +10,7 @@ export function initAuth() {
             // User is signed in.
             console.log("User is signed in:", user.uid);
             renderDashboard(user);
+            setupPreloadedDecks();
         } else {
             // No user is signed in.
             console.log("No user signed in.");
