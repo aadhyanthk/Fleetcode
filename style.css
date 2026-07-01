@@ -1,0 +1,62 @@
+:root {
+  /* LeetCode Light Theme Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f8fa;
+  --bg-tertiary: #f0f0f0;
+  --text-primary: #262626;
+  --text-secondary: #737373;
+  --text-tertiary: #8c8c8c;
+  --accent-orange: #ffa116;
+  --accent-blue: #007aff;
+  --accent-green: #2cbb5d;
+  --accent-red: #ef4743;
+  --accent-yellow: #ffc01e;
+  --border-color: #f0f0f0;
+  
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+body.dark-theme {
+  /* LeetCode Dark Theme Colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #282828;
+  --bg-tertiary: #3e3e3e;
+  --text-primary: #eff1f6;
+  --text-secondary: #8a8a8a;
+  --text-tertiary: #737373;
+  --border-color: #3e3e3e;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Base Utility Classes */
+code, pre {
+  font-family: var(--font-mono);
+}
+
+a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
