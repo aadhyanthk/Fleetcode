@@ -1,5 +1,5 @@
 import { auth, googleProvider } from './firebase-config.js';
-import { signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 
 const appContainer = document.getElementById('app');
 
