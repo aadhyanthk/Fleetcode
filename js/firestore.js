@@ -1,5 +1,5 @@
 import { db, auth } from './firebase-config.js';
-import { collection, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
 import summaries from '../data/summaries.json'; 
 
 export async function setupPreloadedDecks() {
@@ -31,6 +31,16 @@ export async function setupPreloadedDecks() {
 }
 
 // Stubs for next phases
+export async function getCuratedSummaries() {
+    const summariesRef = collection(db, 'curated_summaries');
+    const snapshot = await getDocs(summariesRef);
+    const problems = [];
+    snapshot.forEach(doc => problems.push(doc.data()));
+    // Sort by ID to keep them in order
+    problems.sort((a, b) => (a.id || 0) - (b.id || 0));
+    return problems;
+}
+
 export async function getUserDecks() {
     if (!auth.currentUser) return [];
     // TODO: Fetch user custom decks

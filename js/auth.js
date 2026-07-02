@@ -1,6 +1,7 @@
 import { auth, googleProvider } from './firebase-config.js';
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
 import { setupPreloadedDecks } from './firestore.js';
+import { renderDashboardUI } from './dashboard.js';
 
 const appContainer = document.getElementById('app');
 
@@ -51,20 +52,5 @@ function renderLogin() {
 }
 
 function renderDashboard(user) {
-    appContainer.innerHTML = `
-        <div class="dashboard-view">
-            <header style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 1px solid var(--border-color);">
-                <h1 style="color: var(--accent-orange); margin: 0; font-size: 1.5rem;">Fleetcode</h1>
-                <div class="user-info" style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-weight: 500;">${user.displayName}</span>
-                    <button id="logout-btn" style="padding: 6px 12px; background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 6px;">Log out</button>
-                </div>
-            </header>
-            <main style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
-                <h2>My Dashboard</h2>
-                <p style="color: var(--text-secondary);">Decks and progress will go here...</p>
-            </main>
-        </div>
-    `;
-    document.getElementById('logout-btn').addEventListener('click', logout);
+    renderDashboardUI(appContainer, user);
 }
