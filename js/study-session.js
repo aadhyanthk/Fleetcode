@@ -1,54 +1,60 @@
-import { getProblemData } from './leetcode-api.js';
-
-export async function startStudySession(container, user, deckProblems) {
+export async function startStudySession(container, user, deckProblems, allSummaries) {
     if (!deckProblems || deckProblems.length === 0) {
         alert("Deck is empty!");
         return;
     }
 
-    // Weighted Pseudo-random selection (Phase 5 requirement)
-    // For now, pure random as a baseline until history is integrated
+    // Load history from localStorage to drive the weighted random logic
+    const history = JSON.parse(localStorage.getItem('fleetcode_history') || '{}');
+
+    // Weighted Pseudo-random selection
     function getNextProblem() {
-        const randomIndex = Math.floor(Math.random() * deckProblems.length);
-        return deckProblems[randomIndex];
-    }
-    
-    async function renderNextCard() {
-        container.innerHTML = `
-            <div class="study-view loading-view">
-                <div class="spinner"></div>
-                <p>Loading next problem from LeetCode...</p>
-            </div>
-        `;
-        
-        const problemSummary = getNextProblem();
-        
-        try {
-            const fullData = await getProblemData(problemSummary.slug);
-            renderCardFront(problemSummary, fullData);
-        } catch (error) {
-            container.innerHTML = `
-                <div class="study-view error-view">
-                    <p>Error loading problem details.</p>
-                    <button id="next-btn" class="study-btn">Skip to Next</button>
-                    <button id="exit-btn" class="exit-btn">Exit Session</button>
-                </div>
-            `;
-            document.getElementById('next-btn').onclick = renderNextCard;
-            document.getElementById('exit-btn').onclick = () => window.location.reload();
+        let totalWeight = 0;
+        const weights = deckProblems.map(p => {
+            const h = history[p.slug];
+            let weight = 40; // Base random floor (~40%)
+            if (!h) {
+                weight += 60; // Unseen cards highly prioritized
+            } else if (h === 'wrong' || h === 'partial') {
+                weight += 60; // Cards we struggle with are highly prioritized (~60% higher chance)
+            }
+            // If h === 'correct', weight remains 40
+            totalWeight += weight;
+            return weight;
+        });
+
+        let randomVal = Math.random() * totalWeight;
+        for (let i = 0; i < deckProblems.length; i++) {
+            randomVal -= weights[i];
+            if (randomVal <= 0) {
+                return deckProblems[i];
+            }
         }
+        return deckProblems[0];
     }
     
-    function renderCardFront(summary, fullData) {
+    function saveHistory(slug, assessment) {
+        history[slug] = assessment;
+        localStorage.setItem('fleetcode_history', JSON.stringify(history));
+    }
+    
+    function renderNextCard() {
+        const problemData = getNextProblem();
+        const summaryData = allSummaries.find(s => s.slug === problemData.slug) || { summary: 'No summary available.', timeComplexity: 'N/A', spaceComplexity: 'N/A' };
+        
+        renderCardFront(problemData, summaryData);
+    }
+    
+    function renderCardFront(problemData, summaryData) {
         container.innerHTML = `
             <div class="study-view">
                 <div class="flashcard front">
                     <div class="card-header">
-                        <h2>${summary.id ? '#' + summary.id + ' ' : ''}${summary.title}</h2>
-                        <span class="difficulty ${fullData.difficulty ? fullData.difficulty.toLowerCase() : 'unknown'}">${fullData.difficulty || 'Unknown'}</span>
+                        <h2>${problemData.id ? '#' + problemData.id + ' ' : ''}${problemData.title}</h2>
+                        <span class="difficulty ${problemData.difficulty ? problemData.difficulty.toLowerCase() : 'unknown'}">${problemData.difficulty || 'Unknown'}</span>
                     </div>
                     <div class="card-body html-content">
-                        ${fullData.content}
+                        ${problemData.content}
                     </div>
                     <div class="card-footer">
                         <button id="flip-btn" class="flip-btn">Flip Card</button>
@@ -58,25 +64,25 @@ export async function startStudySession(container, user, deckProblems) {
             </div>
         `;
         
-        document.getElementById('flip-btn').onclick = () => renderCardBack(summary, fullData);
+        document.getElementById('flip-btn').onclick = () => renderCardBack(problemData, summaryData);
         document.getElementById('exit-btn').onclick = () => window.location.reload();
     }
     
-    function renderCardBack(summary, fullData) {
+    function renderCardBack(problemData, summaryData) {
         container.innerHTML = `
             <div class="study-view">
                 <div class="flashcard back">
                     <div class="card-header">
-                        <h2>${summary.id ? '#' + summary.id + ' ' : ''}${summary.title}</h2>
-                        <span class="difficulty ${fullData.difficulty ? fullData.difficulty.toLowerCase() : 'unknown'}">${fullData.difficulty || 'Unknown'}</span>
+                        <h2>${problemData.id ? '#' + problemData.id + ' ' : ''}${problemData.title}</h2>
+                        <span class="difficulty ${problemData.difficulty ? problemData.difficulty.toLowerCase() : 'unknown'}">${problemData.difficulty || 'Unknown'}</span>
                     </div>
                     <div class="card-body">
                         <h3>Optimal Strategy</h3>
-                        <p class="summary-text">${summary.summary}</p>
+                        <p class="summary-text" style="white-space: pre-wrap;">${summaryData.summary}</p>
                         
                         <div class="complexities">
-                            <div class="complexity-badge"><strong>Time:</strong> ${summary.timeComplexity}</div>
-                            <div class="complexity-badge"><strong>Space:</strong> ${summary.spaceComplexity}</div>
+                            <div class="complexity-badge"><strong>Time:</strong> ${summaryData.timeComplexity}</div>
+                            <div class="complexity-badge"><strong>Space:</strong> ${summaryData.spaceComplexity}</div>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -95,8 +101,7 @@ export async function startStudySession(container, user, deckProblems) {
         document.querySelectorAll('.assess-btn').forEach(btn => {
             btn.onclick = (e) => {
                 const val = e.target.dataset.val;
-                console.log("Assessed as:", val);
-                // TODO: Save history to Firestore (Phase 5/6)
+                saveHistory(problemData.slug, val);
                 renderNextCard();
             };
         });
