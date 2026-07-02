@@ -12,12 +12,15 @@ export async function renderDashboardUI(container, user) {
                 </div>
             </header>
             <main class="dashboard-main">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2>Curated Deck (All Problems)</h2>
-                    <span id="deck-stats" style="color: var(--text-secondary);">Loading...</span>
-                </div>
-                <div class="deck-list" id="curated-deck-list">
-                    <p style="text-align: center; color: var(--text-secondary);">Loading problems...</p>
+                <h2>My Decks</h2>
+                <div class="deck-grid" id="deck-grid">
+                    <div class="deck-card">
+                        <div class="deck-info">
+                            <h3>LeetCode Curated Master</h3>
+                            <p id="curated-count" style="color: var(--text-secondary);">Loading cards...</p>
+                        </div>
+                        <button id="study-curated-btn" class="study-btn" disabled>Loading...</button>
+                    </div>
                 </div>
             </main>
         </div>
@@ -25,48 +28,25 @@ export async function renderDashboardUI(container, user) {
 
     document.getElementById('logout-btn').addEventListener('click', logout);
 
-    // Fetch and render
     try {
         const problems = await getCuratedSummaries();
-        const listContainer = document.getElementById('curated-deck-list');
         
-        document.getElementById('deck-stats').textContent = `${problems.length} problems`;
-
-        let html = '<ul class="problem-list">';
-        problems.forEach(p => {
-            html += `
-                <li class="problem-item" data-slug="${p.slug}">
-                    <div class="problem-info">
-                        <span class="problem-id">#${p.id || '?'}</span>
-                        <span class="problem-title">${p.title}</span>
-                    </div>
-                    <div class="problem-history">
-                        <!-- Default empty history dots -->
-                        <span class="dot empty"></span>
-                        <span class="dot empty"></span>
-                        <span class="dot empty"></span>
-                        <span class="dot empty"></span>
-                        <span class="dot empty"></span>
-                    </div>
-                    <button class="study-btn">Study</button>
-                </li>
-            `;
-        });
-        html += '</ul>';
+        const countEl = document.getElementById('curated-count');
+        const studyBtn = document.getElementById('study-curated-btn');
         
-        listContainer.innerHTML = html;
+        countEl.textContent = `${problems.length} cards`;
+        studyBtn.textContent = 'Study Now';
+        studyBtn.disabled = false;
 
-        // Add event listeners for study buttons (stub for Phase 5)
-        document.querySelectorAll('.study-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const slug = e.target.closest('li').dataset.slug;
-                console.log("Start study session for:", slug);
-                alert("Study session for " + slug + " will be implemented in Phase 5!");
+        studyBtn.addEventListener('click', () => {
+            // Lazy load the study session module and start
+            import('./study-session.js').then(module => {
+                module.startStudySession(container, user, problems);
             });
         });
 
     } catch (error) {
         console.error("Error loading decks:", error);
-        document.getElementById('curated-deck-list').innerHTML = '<p>Error loading decks.</p>';
+        document.getElementById('curated-count').textContent = 'Error loading deck.';
     }
 }

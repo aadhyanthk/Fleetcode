@@ -99,52 +99,152 @@ button {
     margin: 0 auto;
 }
 
-.problem-list {
-    list-style: none;
-    padding: 0;
+/* Dashboard Decks */
+.deck-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+.deck-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+.deck-info h3 {
+    margin: 0 0 0.5rem 0;
+}
+.deck-info p {
     margin: 0;
 }
-.problem-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    margin-bottom: 0.5rem;
-    border-radius: 8px;
-    background-color: var(--bg-secondary);
+.study-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
-.problem-info {
-    display: flex;
-    gap: 1rem;
-    font-weight: 500;
-}
-.problem-id {
-    color: var(--text-secondary);
-    width: 40px;
-}
-.problem-history {
-    display: flex;
-    gap: 4px;
-}
-.dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-.dot.empty { background-color: var(--border-color); }
-.dot.red { background-color: var(--accent-red); }
-.dot.yellow { background-color: var(--accent-yellow); }
-.dot.green { background-color: var(--accent-green); }
 
-.study-btn {
-    padding: 6px 12px;
-    background-color: var(--accent-orange);
-    color: #1a1a1a;
-    border: none;
-    border-radius: 6px;
+/* Study Session */
+.study-view {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.flashcard {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+.card-header h2 {
+    margin: 0;
+}
+.difficulty {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
     font-weight: 600;
 }
-.study-btn:hover {
-    opacity: 0.9;
+.difficulty.easy { color: var(--accent-green); background-color: rgba(44, 187, 93, 0.1); }
+.difficulty.medium { color: var(--accent-yellow); background-color: rgba(255, 192, 30, 0.1); }
+.difficulty.hard { color: var(--accent-red); background-color: rgba(239, 71, 67, 0.1); }
+
+.html-content {
+    line-height: 1.6;
+    font-size: 1.05rem;
 }
+.html-content pre {
+    background-color: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+.html-content code {
+    background-color: var(--bg-primary);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.card-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+.flip-btn {
+    padding: 12px 32px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+.flip-btn:hover {
+    border-color: var(--text-primary);
+}
+
+.complexities {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+.complexity-badge {
+    background-color: var(--bg-primary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.assessment-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    width: 100%;
+}
+.assess-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1a1a1a;
+}
+.assess-btn.wrong { background-color: var(--accent-red); }
+.assess-btn.partial { background-color: var(--accent-yellow); }
+.assess-btn.correct { background-color: var(--accent-green); }
+.assess-btn:hover { opacity: 0.9; }
+
+.exit-btn {
+    align-self: center;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    text-decoration: underline;
+}
+.exit-btn:hover { color: var(--text-primary); }
+
+.loading-view, .error-view {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 50vh;
+}
+
