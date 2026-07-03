@@ -1,4 +1,6 @@
-export async function startStudySession(container, user, deckProblems, allSummaries) {
+import { saveUserSummary } from './firestore.js';
+
+export async function startStudySession(container, user, deckProblems, allSummaries, userSummaries) {
     if (!deckProblems || deckProblems.length === 0) {
         alert("Deck is empty!");
         return;
@@ -69,6 +71,8 @@ export async function startStudySession(container, user, deckProblems, allSummar
     }
     
     function renderCardBack(problemData, summaryData) {
+        const personalSummary = userSummaries[problemData.slug] || '';
+
         container.innerHTML = `
             <div class="study-view">
                 <div class="flashcard back">
@@ -77,15 +81,23 @@ export async function startStudySession(container, user, deckProblems, allSummar
                         <span class="difficulty ${problemData.difficulty ? problemData.difficulty.toLowerCase() : 'unknown'}">${problemData.difficulty || 'Unknown'}</span>
                     </div>
                     <div class="card-body">
-                        <h3>Optimal Strategy</h3>
-                        <p class="summary-text" style="white-space: pre-wrap;">${summaryData.summary}</p>
-                        
-                        <div class="complexities">
-                            <div class="complexity-badge"><strong>Time:</strong> ${summaryData.timeComplexity}</div>
-                            <div class="complexity-badge"><strong>Space:</strong> ${summaryData.spaceComplexity}</div>
+                        <h3>Personal Strategy</h3>
+                        <textarea id="personal-summary-input" class="custom-summary-input" placeholder="Write your own custom strategy for this problem here...">${personalSummary}</textarea>
+                        <button id="save-summary-btn" class="save-btn">Save Summary</button>
+
+                        <button class="accordion-btn" id="accordion-toggle">
+                            <span>Show Curated Strategy</span>
+                            <span id="accordion-icon">▼</span>
+                        </button>
+                        <div class="accordion-content" id="curated-accordion">
+                            <p style="white-space: pre-wrap; font-family: var(--font-sans); line-height: 1.6;">${summaryData.summary}</p>
+                            <div class="complexities" style="margin-top: 1.5rem;">
+                                <div class="complexity-badge"><strong>Time:</strong> ${summaryData.timeComplexity}</div>
+                                <div class="complexity-badge"><strong>Space:</strong> ${summaryData.spaceComplexity}</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-footer">
+                    <div class="card-footer" style="margin-top: 2rem;">
                         <h4 style="text-align: center; width: 100%; margin-bottom: 1rem;">How did you do?</h4>
                         <div class="assessment-buttons">
                             <button class="assess-btn wrong" data-val="wrong">❌ No idea</button>
@@ -95,8 +107,35 @@ export async function startStudySession(container, user, deckProblems, allSummar
                     </div>
                 </div>
                 <button id="exit-btn" class="exit-btn">Exit Session</button>
+                <div id="toast" class="toast">Saved!</div>
             </div>
         `;
+
+        // Handle Accordion
+        const accordionBtn = document.getElementById('accordion-toggle');
+        const accordionContent = document.getElementById('curated-accordion');
+        const accordionIcon = document.getElementById('accordion-icon');
+        
+        if (!personalSummary) {
+            accordionContent.classList.add('open');
+            accordionIcon.textContent = '▲';
+        }
+
+        accordionBtn.addEventListener('click', () => {
+            const isOpen = accordionContent.classList.toggle('open');
+            accordionIcon.textContent = isOpen ? '▲' : '▼';
+        });
+
+        // Handle Save
+        document.getElementById('save-summary-btn').addEventListener('click', async () => {
+            const text = document.getElementById('personal-summary-input').value;
+            await saveUserSummary(user.uid, problemData.slug, text);
+            userSummaries[problemData.slug] = text; // update local cache
+            
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        });
         
         document.querySelectorAll('.assess-btn').forEach(btn => {
             btn.onclick = (e) => {

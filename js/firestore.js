@@ -1,5 +1,5 @@
 import { db, auth } from './firebase-config.js';
-import { collection, doc, getDoc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 import summaries from '../data/summaries.json'; 
 import problemsData from '../data/problems.json';
 
@@ -65,4 +65,19 @@ export async function getUserDecks() {
     if (!auth.currentUser) return [];
     // TODO: Fetch user custom decks
     return [];
+}
+
+export async function saveUserSummary(userId, slug, summaryText) {
+    const docRef = doc(db, 'user_summaries', userId, 'problems', slug);
+    await setDoc(docRef, { summary: summaryText, updatedAt: Timestamp.now() }, { merge: true });
+}
+
+export async function getUserSummaries(userId) {
+    const collRef = collection(db, 'user_summaries', userId, 'problems');
+    const snapshot = await getDocs(collRef);
+    const userSummaries = {};
+    snapshot.forEach(doc => {
+        userSummaries[doc.id] = doc.data().summary;
+    });
+    return userSummaries;
 }

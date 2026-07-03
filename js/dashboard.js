@@ -1,12 +1,20 @@
-import { getCuratedSummaries, getCuratedProblems } from './firestore.js';
+import { getCuratedSummaries, getCuratedProblems, getUserSummaries, saveUserSummary } from './firestore.js';
 import { logout } from './auth.js';
 
 export async function renderDashboardUI(container, user) {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.remove('dark-theme');
+    } else {
+        document.body.classList.add('dark-theme');
+    }
+
     container.innerHTML = `
         <div class="dashboard-view" id="dashboard-root">
             <header class="navbar">
                 <h1>Fleetcode</h1>
                 <div class="user-info">
+                    <button id="theme-toggle-btn" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">${savedTheme === 'light' ? '🌙' : '☀️'}</button>
                     <span>${user.displayName}</span>
                     <button id="logout-btn">Log out</button>
                 </div>
@@ -33,19 +41,29 @@ export async function renderDashboardUI(container, user) {
                     </div>
                 </div>
             </main>
+            
+            <div id="toast" class="toast">Saved!</div>
         </div>
     `;
 
     document.getElementById('logout-btn').addEventListener('click', logout);
+    
+    document.getElementById('theme-toggle-btn').addEventListener('click', (e) => {
+        const isDark = document.body.classList.toggle('dark-theme');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        e.target.textContent = isDark ? '☀️' : '🌙';
+    });
+
     document.getElementById('back-btn').addEventListener('click', () => {
         document.getElementById('split-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
     });
 
     try {
-        const [summaries, problems] = await Promise.all([
+        const [summaries, problems, userSummaries] = await Promise.all([
             getCuratedSummaries(),
-            getCuratedProblems()
+            getCuratedProblems(),
+            getUserSummaries(user.uid)
         ]);
         
         // Build decks from problems data
@@ -86,9 +104,9 @@ export async function renderDashboardUI(container, user) {
                 const deckId = e.target.dataset.deckId;
                 if (!deckId) return; // ignore back button
                 const selectedDeckProblems = decks.find(d => d.id === deckId).data;
-                // Pass both problems and summaries to study session
+                // Pass problems, curated summaries, and user summaries
                 import('./study-session.js').then(module => {
-                    module.startStudySession(container, user, selectedDeckProblems, summaries);
+                    module.startStudySession(container, user, selectedDeckProblems, summaries, userSummaries);
                 });
             });
         });
@@ -128,10 +146,11 @@ export async function renderDashboardUI(container, user) {
 
                         const slug = ev.currentTarget.dataset.slug;
                         const problem = deck.data.find(p => p.slug === slug);
-                        const summary = summaries.find(s => s.slug === slug) || { summary: 'No summary available.', timeComplexity: 'N/A', spaceComplexity: 'N/A' };
+                        const curatedSummary = summaries.find(s => s.slug === slug) || { summary: 'No summary available.', timeComplexity: 'N/A', spaceComplexity: 'N/A' };
+                        const personalSummary = userSummaries[slug] || '';
                         
                         document.getElementById('single-question-content').innerHTML = `
-                            <div class="flashcard">
+                            <div class="flashcard" style="box-shadow: none; max-width: 100%;">
                                 <div class="card-header">
                                     <h2>#${problem.id} ${problem.title}</h2>
                                     <span class="difficulty ${problem.difficulty.toLowerCase()}">${problem.difficulty}</span>
@@ -139,15 +158,52 @@ export async function renderDashboardUI(container, user) {
                                 <div class="card-body html-content">
                                     ${problem.content}
                                     <hr style="margin: 2rem 0; border: 1px solid var(--border-color);" />
-                                    <h3>Optimal Strategy</h3>
-                                    <p style="white-space: pre-wrap; font-family: var(--font-sans); line-height: 1.6;">${summary.summary}</p>
-                                    <div class="complexities" style="margin-top: 1.5rem;">
-                                        <div class="complexity-badge"><strong>Time:</strong> ${summary.timeComplexity}</div>
-                                        <div class="complexity-badge"><strong>Space:</strong> ${summary.spaceComplexity}</div>
+                                    
+                                    <h3>Personal Strategy</h3>
+                                    <textarea id="personal-summary-input" class="custom-summary-input" placeholder="Write your own custom strategy for this problem here...">${personalSummary}</textarea>
+                                    <button id="save-summary-btn" class="save-btn">Save Summary</button>
+
+                                    <button class="accordion-btn" id="accordion-toggle">
+                                        <span>Show Curated Strategy</span>
+                                        <span id="accordion-icon">▼</span>
+                                    </button>
+                                    <div class="accordion-content" id="curated-accordion">
+                                        <p style="white-space: pre-wrap; font-family: var(--font-sans); line-height: 1.6;">${curatedSummary.summary}</p>
+                                        <div class="complexities" style="margin-top: 1.5rem;">
+                                            <div class="complexity-badge"><strong>Time:</strong> ${curatedSummary.timeComplexity}</div>
+                                            <div class="complexity-badge"><strong>Space:</strong> ${curatedSummary.spaceComplexity}</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         `;
+
+                        // Handle Accordion
+                        const accordionBtn = document.getElementById('accordion-toggle');
+                        const accordionContent = document.getElementById('curated-accordion');
+                        const accordionIcon = document.getElementById('accordion-icon');
+                        
+                        // If no personal summary exists, open curated by default
+                        if (!personalSummary) {
+                            accordionContent.classList.add('open');
+                            accordionIcon.textContent = '▲';
+                        }
+
+                        accordionBtn.addEventListener('click', () => {
+                            const isOpen = accordionContent.classList.toggle('open');
+                            accordionIcon.textContent = isOpen ? '▲' : '▼';
+                        });
+
+                        // Handle Save
+                        document.getElementById('save-summary-btn').addEventListener('click', async () => {
+                            const text = document.getElementById('personal-summary-input').value;
+                            await saveUserSummary(user.uid, slug, text);
+                            userSummaries[slug] = text; // update local cache
+                            
+                            const toast = document.getElementById('toast');
+                            toast.classList.add('show');
+                            setTimeout(() => toast.classList.remove('show'), 2000);
+                        });
                     });
                 });
 
