@@ -19,31 +19,27 @@ export async function renderDashboardUI(container, user) {
                 </div>
             </main>
 
-            <main class="dashboard-main" id="questions-view" style="display: none;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-                    <button id="back-btn" class="study-btn" style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);">← Back</button>
-                    <h2 id="questions-view-title" style="margin: 0;">Deck</h2>
+            <main class="dashboard-main split-layout" id="split-view" style="display: none;">
+                <div class="sidebar">
+                    <div class="sidebar-header" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                        <button id="back-btn" class="study-btn" style="background-color: transparent; color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px 12px;">← Back to Decks</button>
+                        <h2 id="questions-view-title" style="margin-top: 1rem; margin-bottom: 0;">Deck</h2>
+                    </div>
+                    <ul class="modern-list" id="questions-list" style="padding: 1rem; overflow-y: auto; max-height: calc(100vh - 180px);"></ul>
                 </div>
-                <ul class="problem-list" id="questions-list"></ul>
-            </main>
-
-            <main class="dashboard-main" id="single-question-view" style="display: none;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-                    <button id="back-to-questions-btn" class="study-btn" style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);">← Back to List</button>
+                <div class="content-pane" id="single-question-content" style="padding: 2rem; overflow-y: auto; max-height: calc(100vh - 70px);">
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                        <p>Select a question from the left to read it here.</p>
+                    </div>
                 </div>
-                <div id="single-question-content"></div>
             </main>
         </div>
     `;
 
     document.getElementById('logout-btn').addEventListener('click', logout);
     document.getElementById('back-btn').addEventListener('click', () => {
-        document.getElementById('questions-view').style.display = 'none';
+        document.getElementById('split-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
-    });
-    document.getElementById('back-to-questions-btn').addEventListener('click', () => {
-        document.getElementById('single-question-view').style.display = 'none';
-        document.getElementById('questions-view').style.display = 'block';
     });
 
     try {
@@ -107,18 +103,29 @@ export async function renderDashboardUI(container, user) {
                 const listContainer = document.getElementById('questions-list');
                 
                 listContainer.innerHTML = deck.data.map(p => `
-                    <li class="problem-item clickable-problem" data-slug="${p.slug}" style="cursor: pointer;">
-                        <div class="problem-info">
+                    <li class="modern-card clickable-problem" data-slug="${p.slug}">
+                        <span class="problem-title">${p.title}</span>
+                        <div class="problem-meta">
                             <span class="problem-id">#${p.id || '?'}</span>
-                            <span class="problem-title">${p.title}</span>
-                            <span class="difficulty ${p.difficulty.toLowerCase()}" style="margin-left: 1rem; font-size: 0.75rem;">${p.difficulty}</span>
+                            <span class="difficulty ${p.difficulty.toLowerCase()}">${p.difficulty}</span>
                         </div>
                     </li>
                 `).join('');
 
+                // Reset content pane
+                document.getElementById('single-question-content').innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                        <p>Select a question from the left to read it here.</p>
+                    </div>
+                `;
+
                 // Add click listeners to items
                 document.querySelectorAll('.clickable-problem').forEach(item => {
                     item.addEventListener('click', (ev) => {
+                        // Remove active class from all, add to clicked
+                        document.querySelectorAll('.clickable-problem').forEach(i => i.classList.remove('active'));
+                        ev.currentTarget.classList.add('active');
+
                         const slug = ev.currentTarget.dataset.slug;
                         const problem = deck.data.find(p => p.slug === slug);
                         const summary = summaries.find(s => s.slug === slug) || { summary: 'No summary available.', timeComplexity: 'N/A', spaceComplexity: 'N/A' };
@@ -133,21 +140,19 @@ export async function renderDashboardUI(container, user) {
                                     ${problem.content}
                                     <hr style="margin: 2rem 0; border: 1px solid var(--border-color);" />
                                     <h3>Optimal Strategy</h3>
-                                    <p style="white-space: pre-wrap;">${summary.summary}</p>
-                                    <div class="complexities">
+                                    <p style="white-space: pre-wrap; font-family: var(--font-sans); line-height: 1.6;">${summary.summary}</p>
+                                    <div class="complexities" style="margin-top: 1.5rem;">
                                         <div class="complexity-badge"><strong>Time:</strong> ${summary.timeComplexity}</div>
                                         <div class="complexity-badge"><strong>Space:</strong> ${summary.spaceComplexity}</div>
                                     </div>
                                 </div>
                             </div>
                         `;
-                        document.getElementById('questions-view').style.display = 'none';
-                        document.getElementById('single-question-view').style.display = 'block';
                     });
                 });
 
                 document.getElementById('main-view').style.display = 'none';
-                document.getElementById('questions-view').style.display = 'block';
+                document.getElementById('split-view').style.display = 'grid';
             });
         });
 

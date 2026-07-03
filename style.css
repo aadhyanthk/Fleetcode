@@ -199,6 +199,80 @@ button {
 .flip-btn:hover {
     border-color: var(--text-primary);
 }
+.problem-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.problem-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+}
+.problem-info {
+    display: flex;
+    gap: 1rem;
+    font-weight: 500;
+}
+.problem-id {
+    color: var(--text-secondary);
+    width: 40px;
+}
+
+/* Split Layout */
+.split-layout {
+    grid-template-columns: 350px 1fr;
+    height: calc(100vh - 65px);
+    max-width: 1600px !important;
+    padding: 0 !important;
+}
+.sidebar {
+    border-right: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+}
+.content-pane {
+    background-color: var(--bg-secondary);
+}
+
+/* Modern Card Layout for List Items */
+.modern-list {
+    list-style: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.modern-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.modern-card:hover, .modern-card.active {
+    transform: translateY(-2px);
+    border-color: var(--accent-orange);
+    box-shadow: 0 4px 12px rgba(255, 161, 22, 0.15);
+}
+.modern-card .problem-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.modern-card .problem-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
 
 .complexities {
     display: flex;
