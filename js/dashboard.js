@@ -26,6 +26,13 @@ export async function renderDashboardUI(container, user) {
                 </div>
                 <ul class="problem-list" id="questions-list"></ul>
             </main>
+
+            <main class="dashboard-main" id="single-question-view" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                    <button id="back-to-questions-btn" class="study-btn" style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color);">← Back to List</button>
+                </div>
+                <div id="single-question-content"></div>
+            </main>
         </div>
     `;
 
@@ -33,6 +40,10 @@ export async function renderDashboardUI(container, user) {
     document.getElementById('back-btn').addEventListener('click', () => {
         document.getElementById('questions-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
+    });
+    document.getElementById('back-to-questions-btn').addEventListener('click', () => {
+        document.getElementById('single-question-view').style.display = 'none';
+        document.getElementById('questions-view').style.display = 'block';
     });
 
     try {
@@ -96,7 +107,7 @@ export async function renderDashboardUI(container, user) {
                 const listContainer = document.getElementById('questions-list');
                 
                 listContainer.innerHTML = deck.data.map(p => `
-                    <li class="problem-item" data-slug="${p.slug}">
+                    <li class="problem-item clickable-problem" data-slug="${p.slug}" style="cursor: pointer;">
                         <div class="problem-info">
                             <span class="problem-id">#${p.id || '?'}</span>
                             <span class="problem-title">${p.title}</span>
@@ -104,6 +115,36 @@ export async function renderDashboardUI(container, user) {
                         </div>
                     </li>
                 `).join('');
+
+                // Add click listeners to items
+                document.querySelectorAll('.clickable-problem').forEach(item => {
+                    item.addEventListener('click', (ev) => {
+                        const slug = ev.currentTarget.dataset.slug;
+                        const problem = deck.data.find(p => p.slug === slug);
+                        const summary = summaries.find(s => s.slug === slug) || { summary: 'No summary available.', timeComplexity: 'N/A', spaceComplexity: 'N/A' };
+                        
+                        document.getElementById('single-question-content').innerHTML = `
+                            <div class="flashcard">
+                                <div class="card-header">
+                                    <h2>#${problem.id} ${problem.title}</h2>
+                                    <span class="difficulty ${problem.difficulty.toLowerCase()}">${problem.difficulty}</span>
+                                </div>
+                                <div class="card-body html-content">
+                                    ${problem.content}
+                                    <hr style="margin: 2rem 0; border: 1px solid var(--border-color);" />
+                                    <h3>Optimal Strategy</h3>
+                                    <p style="white-space: pre-wrap;">${summary.summary}</p>
+                                    <div class="complexities">
+                                        <div class="complexity-badge"><strong>Time:</strong> ${summary.timeComplexity}</div>
+                                        <div class="complexity-badge"><strong>Space:</strong> ${summary.spaceComplexity}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        document.getElementById('questions-view').style.display = 'none';
+                        document.getElementById('single-question-view').style.display = 'block';
+                    });
+                });
 
                 document.getElementById('main-view').style.display = 'none';
                 document.getElementById('questions-view').style.display = 'block';
