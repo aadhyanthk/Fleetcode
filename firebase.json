@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "fleetcode",
     "public": "dist",
     "ignore": [
       "firebase.json",
